@@ -1,0 +1,178 @@
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <style>
+      #gameField{
+          width: 660px;
+          height: 400px;
+          background-color: #9ae6b4;
+          display: flex;
+          flex-wrap: wrap;
+          align-content: flex-start;
+      }
+      .field-item{
+          background-color: #d8f1df;
+          flex-basis: 108px;
+          text-align: center;
+          width: 110px;
+          height: 110px;
+          border: aliceblue solid 1px;
+          appearance: none;
+      }
+  </style>
+</head>
+<body>
+
+<div style="height: 200px;font-size: 26px;">
+  Крч заполняете поля, после заполнения всех полей генерятся все возможные из текущего игрового поля комбинации.
+  <br>
+  Так же при изменении поля(они редактируемы) комбинации обновляются.
+  <br>
+  tips: добавлять элементы можно нажимая enter, не кликая каждый раз на кнопку.
+  <br>
+  Так же можно добавить свои элементы, в подсказке только те, что были в таблице.
+</div>
+<label for="datainput">Добавьте слова которые в игре(порядок не важен):</label>
+<input type="text" list="datalist" id="datainput" name="dataInput"> <button id="myBtn" onclick="dataAdd()"> Add element </button>
+<datalist name="datalist" id="datalist">
+</datalist>
+
+<br>
+<div style="display: flex">
+  <div>
+  <label >Игровое поле:</label>
+  <div id="gameField" class="field">
+  </div>
+  </div>
+  <div style="margin-left: 10px">
+
+    <label>Комбинации:</label>
+<!--    <input type="text" id="getCombos" name="getCombos" list="datalist"> <button id="getCombosBtn" onclick="findCombos()"> word </button>-->
+    <div id="combosOutput" style="padding: 8px; background-color: #c6f1ff;">
+
+    </div>
+  </div>
+</div>
+<script>
+  let words = 'AcornS BaT CoffieE DrawerS ElF FirE GorillA HanD InK KoalA LeprechauN MiC NothinG OstricH PolarbeaR RadiO ScribblE TrumpeT WaterjaR YaK AcustiC BoaR CrosS DesserT ElboW FactorY GraffitI HousE IndustriaL KaraokE LifesaveR MushrooM NaiL OinkeR PandA RackeT ShelL TeddybeaR WhitebeaR YolK ArM BeaR CoW DwarF EggtimeR FooD GerbiL HorsE IcecreaM KitteN LighT MilK NutS OctopuS PalM RockeT SuN TelescopE WirelesS AutomobilE BalooN CaT DaY EwE GlasseS HourglasseS IguanA KrakeN LighthousE MonkeY NewT PiG RacooN SheeP TanukI WhirlpooL ApplE CaR DrawinG EaR HorN LizarD MooN PoT ReptilE SquiD TubesockS WooL ApE CamerA DonuT ElK GnomE HotaiR LadlE MousE PortaL RabbiT SafE TreE AmphibiaN ChesT DeeR EggS GuitaR LamB MarE PersoN RaT SpikE TurtlE CeramiC EclipsE RamB SquirreL TaK EyeglasseS RheA SneakerS TimeR SockS ToadstooL SuN SpaceshiP ShruB ShrooM'.toLowerCase().split(' ');
+  console.log('words', words);
+
+  let wordsSet = new Set(words);
+  let gameSet = new Set();
+
+  console.log(wordsSet);
+  let datalist = document.querySelector('#datalist');
+  let dataInput = document.querySelector('#datainput');
+  let gameField = document.querySelector('#gameField');
+  let combosInput = document.querySelector('#getCombos');
+  let combosOutput = document.querySelector('#combosOutput');
+
+  for(let i of words){
+    const opt = document.createElement('option');
+    opt.value = i;
+    datalist.appendChild(opt);
+  }
+
+  dataInput.addEventListener("keypress", function(event) {
+    // If the user presses the "Enter" key on the keyboard
+    if (event.key === "Enter") {
+      // Cancel the default action, if needed
+      event.preventDefault();
+      // Trigger the button element with a click
+      document.getElementById("myBtn").click();
+    }
+  });
+
+  function findCombos(customWord){
+    const lastWord = customWord?customWord:combosInput.value;
+    const setArr = [];
+    let combArr = [];
+    const set = gameSet;
+    function combs(set, startWord){
+      set.delete(startWord);
+      for(let i of set){
+        set.delete(i);
+        if(i[0] === startWord.at(-1)) {
+          combArr.push(i);
+          return combs(set, i.at(-1));
+        }
+      }
+      return combArr;
+    }
+
+    for(let i of set) {
+      combArr = [];
+
+      if (i[0] === lastWord.at(-1) && i !== lastWord) {
+
+        setArr.push([lastWord,i,...combs(new Set([...gameSet]), i)]);
+      }
+    }
+    for(let combo of setArr){
+      const div = document.createElement('div');
+      let divisor = '';
+      for(let word of combo){
+
+        div.textContent += divisor+ word;
+        divisor = ' -> ';
+      }
+      combosOutput.appendChild(div);
+    }
+
+    console.log('setArr',setArr);
+  }
+
+  function changeGameItem(ev){
+    console.log('ev',ev);
+    gameSet.delete(ev.target.cacheValue);
+    gameSet.add(ev.target.value);
+    combosOutput.replaceChildren();
+    for(let i of gameSet){
+      findCombos(i);
+    }
+  }
+
+  function dataAdd() {
+    if(!dataInput.value) return;
+    if(gameSet.size > 24) return;
+    if(gameSet.has(dataInput.value)) return;
+    console.log('gameSet',gameSet);
+    wordsSet.delete(dataInput.value);
+    gameSet.add(dataInput.value);
+    const el = document.createElement('input');
+    el.value = dataInput.value;
+    el.id = 'field-item'+dataInput.value;
+    el.className = 'field-item'
+    el.setAttribute('list',datalist.id);
+    el.onchange = changeGameItem;
+    el.cacheValue = dataInput.value;
+    dataInput.value = null;
+    gameField.appendChild(el);
+    if(gameSet.size == 24) {
+      for(let i of gameSet){
+        findCombos(i);
+      }
+      return;
+    }
+  }
+
+  // function generatorField(){
+  //   let dur = 10;
+  //   for(let i of wordsSet){
+  //     dur+= 10;
+  //     if (dur > 250) break;
+  //     setTimeout(()=>{
+  //       dataInput.value = i;
+  //       document.getElementById("myBtn").click();
+  //     }, dur);
+  //   }
+  // }
+  //
+  // generatorField();
+</script>
+</body>
+</html>
